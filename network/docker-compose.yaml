@@ -1,0 +1,117 @@
+version: '2'
+
+volumes:
+ orderer.cpu-network.com:
+ peer0.ngp.cpu-network.com:
+
+networks:
+  cpu:
+
+services:
+  orderer.cpu-network.com: 
+    container_name: orderer.cpu-network.com
+    image: hyperledger/fabric-orderer:2.1.1
+    environment:
+     - FABRIC_LOGGING_SPEC=INFO 
+     - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+     - ORDERER_GENERAL_GENESISMETHOD=file
+     - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+     - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+     - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+     - ORDERER_GENERAL_TLS_ENABLED=false
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+      - ./channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+      - ./crypto-config/ordererOrganizations/cpu-network.com/orderers/orderer.cpu-network.com/msp:/var/hyperledger/orderer/msp
+      - orderer.cpu-network.com:/var/hyperledger/production/orderer
+    ports:
+      - 7050:7050
+    networks:
+      - cpu
+
+  peer0.ngp.cpu-network.com:
+    container_name: peer0.ngp.cpu-network.com
+    image: hyperledger/fabric-peer:2.1.1
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=network_cpu
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=false
+      - CORE_PEER_GOSSIP_USELEADERELECTION=false
+      - CORE_PEER_GOSSIP_ORGLEADER=true
+      - CORE_PEER_ID=peer0.ngp.cpu-network.com
+      - CORE_PEER_ADDRESS=peer0.ngp.cpu-network.com:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.ngp.cpu-network.com:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.ngp.cpu-network.com:7051
+      - CORE_PEER_LOCALMSPID=ngpMSP
+      - CORE_CHAINCODE_LOGGING_SHIM=INFO
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start 
+    volumes:
+      - /var/run/:/host/var/run/
+      - ./crypto-config/peerOrganizations/ngp.cpu-network.com/peers/peer0.ngp.cpu-network.com/msp:/etc/hyperledger/fabric/msp
+      - peer0.ngp.cpu-network.com:/var/hyperledger/production
+    ports:
+      - 7051:7051
+      - 7052:7052
+    networks:
+      - cpu
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:2.2
+    tty: true
+    stdin_open: true
+    environment:
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.ngp.cpu-network.com:7051
+      - CORE_PEER_LOCALMSPID=ngpMSP
+      - CORE_PEER_TLS_ENABLED=false
+      - CORE_CHAINCODE_ID_NAME="cpu:1.0"
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+      - /var/run/:/host/var/run/
+      - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+      - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
+      # # - ./../chaincode:/opt/gopath/src/github.com/hyperledger/fabric/peer/chaincode
+      # - ./install.sh:/opt/gopath/src/github.com/hyperledger/fabric/peer/install.sh
+      # - ./main.go:/opt/gopath/src/github.com/hyperledger/fabric/peer/main.go
+      # - ./ccp:/opt/gopath/src/github.com/hyperledger/fabric/peer/ccp
+      - ./:/opt/gopath/src/github.com/hyperledger/fabric/peer/
+    depends_on:
+      - orderer.cpu-network.com
+      - peer0.ngp.cpu-network.com
+    networks:
+      - cpu
+
+  # chaincode:
+  #   container_name: chaincode
+  #   image: hyperledger/fabric-ccenv:latest
+  #   tty: true
+  #   environment:
+  #     - GOPATH=/opt/gopath
+  #     - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     - CORE_PEER_ID=chaincode
+  #     - CORE_PEER_ADDRESS=peer0.ngp.cpu-network.com:7051
+  #     - CORE_PEER_LOCALMSPID=iitMSP
+  #     - CORE_PEER_TLS_ENABLED=false
+  #     - CORE_CHAINCODE_ID_NAME="cpu-network:1.0"
+  #     - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp
+  #   working_dir: /opt/gopath/src/chaincode
+  #   command: /bin/bash -c 'sleep 6000000'
+  #   volumes:
+  #     - /var/run/:/host/var/run/
+  #     - ./../chaincode:/opt/gopath/src/chaincode
+  #     - ./crypto-config:/opt/gopath/src/crypto
+  #   networks:
+  #     - cpu
+  

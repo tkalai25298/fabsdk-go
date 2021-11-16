@@ -1,0 +1,81 @@
+---
+version: 1.0.0
+
+#
+# The client section used by GO SDK.
+#
+client:
+
+  # Which organization does this application instance belong to? The value must be the name of an org
+  # defined under "organizations"
+  organization: ngpMSP
+
+  logging:
+    level: info
+
+  # Root of the MSP directories with keys and certs.
+  # cryptoconfig:
+  #   path: ../ca-net/network/certs/peerorg/admin/
+
+  BCCSP:
+    security:
+     enabled: true
+     default:
+      provider: "SW"
+     hashAlgorithm: "SHA2"
+     softVerify: true
+     level: 256
+
+channels:
+  ngpchannel:
+    peers:
+      peer0.ngp.cpu-network.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+
+organizations:
+  ngpMSP:
+    mspid: ngpMSP
+    peers:
+      - peer0.ngp.cpu-network.com
+
+    users:
+      admin:
+        Key:
+          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/keystore/priv_sk"
+        Cert:
+          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/signcerts/cert.pem"
+    # users:
+    #   - admin
+
+  ordererOrg:
+    mspid: ordererMSP
+    # cryptoPath: ../ca-net/network/certs/ordererorg/admin/msp
+    # Just a hack
+    users:
+      admin:
+        Key:
+          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/keystore/priv_sk"
+        Cert:
+          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/signcerts/cert.pem"
+
+orderers:
+  orderer.cpu-network.com:
+    url: orderer.cpu-network.com:7050
+    grpcOptions:
+      ssl-target-name-override: orderer.cpu-network.com
+      # allow-insecure will be taken into consideration if address has no protocol defined, if true then grpc or else grpcs
+      allow-insecure: true
+    tlsCACerts:
+      # Certificate location path
+      path: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/cpu-network.com/orderers/orderer.cpu-network.com/tls/ca.crt
+
+peers:
+  peer0.ngp.cpu-network.com:
+    url: peer0.ngp.cpu-network.com:7051
+    grpcOptions:
+      ssl-target-name-override: peer0.ngp.cpu-network.com
+      # allow-insecure will be taken into consideration if address has no protocol defined, if true then grpc or else grpcs
+      allow-insecure: true

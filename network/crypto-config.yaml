@@ -1,0 +1,14 @@
+OrdererOrgs:
+  - Name: Orderer
+    Domain: cpu-network.com
+    EnableNodeOUs: true
+    Specs:
+      - Hostname: orderer
+PeerOrgs:
+  - Name: ngp
+    Domain: ngp.cpu-network.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+    Users:
+      Count: 0

@@ -1,0 +1,34 @@
+name: "network_cpu"
+description: "Cpu-use Network"
+version: "1.0"
+client:
+  organization: ngp
+  connection:
+    timeout:
+      peer:
+        endorser: 300
+        eventHub: 300
+        eventReg: 300
+      orderer: 300
+channels:
+  cpuchannel:
+    orderers:
+      -  orderer.cpu-network.com
+    peers:
+      peer0.ngp.cpu-network.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+organizations:
+  ngp:
+    mspid: ngpMSP
+    peers:
+      - peer0.ngp.cpu-network.com
+  
+orderers:
+  orderer.cpu-network.com:
+    url: grpc://localhost:7050
+peers:
+  peer0.ngp.cpu-network.com:
+    url: grpc://localhost:7051
