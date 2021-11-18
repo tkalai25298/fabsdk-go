@@ -46,7 +46,7 @@ organizations:
         Key:
           Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/keystore/priv_sk"
         Cert:
-          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/signcerts/cert.pem"
+          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/signcerts/Admin@ngp.cpu-network.com-cert.pem"
     # users:
     #   - admin
 
@@ -59,7 +59,7 @@ organizations:
         Key:
           Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/keystore/priv_sk"
         Cert:
-          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/signcerts/cert.pem"
+          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/signcerts/Admin@ngp.cpu-network.com-cert.pem"
 
 orderers:
   orderer.cpu-network.com:

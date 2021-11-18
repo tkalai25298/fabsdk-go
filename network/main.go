@@ -1,34 +1,23 @@
 package main
 
 import (
-	// "encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"strings"
 
-	// "reflect"
-	"regexp"
-
-	"github.com/hyperledger/fabric-sdk-go/pkg/client/ledger"
-	"github.com/hyperledger/fabric-sdk-go/pkg/client/msp"
-	mspprov "github.com/hyperledger/fabric-sdk-go/pkg/common/providers/msp"
+	"github.com/hyperledger/fabric-sdk-go/pkg/client/resmgmt"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
 
-	"github.com/hyperledger/fabric-sdk-go/pkg/core/cryptosuite/bccsp/sw"
-	mspimpl "github.com/hyperledger/fabric-sdk-go/pkg/msp"
-
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
-	"encoding/json"
+	"gopkg.in/yaml.v2"
 )
 
 func main() {
 
 	base := flag.String("ccp", "ccp/cli-ccp.yaml", "The ccp path to use.")
 	asLocalhost := flag.Bool("localhost", false, "To set weather we want to set localhost.")
-	// certPath := flag.String("cert_path","/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/signcerts/cert.pem","The path to the MSP identity cert.")
-	// keyPath := flag.String("key_path","/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/keystore/priv_sk","The path to the MSP identity key.")
+	channelName := "ngpchannel"
+	configPath	:= "/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts/channel.tx"
 	flag.Parse()
 
 	if *asLocalhost {
@@ -42,17 +31,11 @@ func main() {
 		}
 	}
 
-	Base_Using_Users_In_CCP(base)
-	// Base_Using_Created_Signing_Identity(base,certPath,keyPath)
+	Create_Join_Channel(base,channelName,configPath)
 
-	// *base = "ccp/cli-msp-ccp.yml"
-
-	// Custom_User_KVStore(base,certPath,keyPath)
-
-	// Identity_Config(base)
 }
 
-func Base_Using_Users_In_CCP(base *string) {
+func Create_Join_Channel(base *string,channelName string,configPath string) {
 	new, err := fabsdk.New(config.FromFile(*base))
 
 	if err != nil {
@@ -64,207 +47,48 @@ func Base_Using_Users_In_CCP(base *string) {
 
 	fmt.Println("New Fabric context created")
 
-	chctx := new.ChannelContext("ngpchannel", fabsdk.WithOrg("ngpMSP"), fabsdk.WithUser("admin"))
-	clctx := new.Context(fabsdk.WithOrg("ngpMSP"))
+	// chctx := new.ChannelContext("ngpchannel", fabsdk.WithOrg("ngpMSP"), fabsdk.WithUser("admin"))
+	clctx := new.Context(fabsdk.WithOrg("ngpMSP"), fabsdk.WithUser("admin"))
 
-	_, err = msp.New(clctx)
+	ch, err := resmgmt.New(clctx)
 	if err != nil {
-		fmt.Printf("The error while creating ledger context : %v \n", err)
+		fmt.Printf("The error while creating resource management client : %v \n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("   - New Fabric msp-client context created \n")
+	fmt.Printf("   - New Fabric resource mgmt-client context created \n")
 
-	ld, err := ledger.New(chctx)
+	//creating reader for configtx file
+	r, err := os.Open(configPath)
 	if err != nil {
-		fmt.Printf("The error while creating ledger context : %v \n", err)
+		fmt.Printf("failed to open channel config: %s\n", err)
+	}
+	defer r.Close()
+
+	_,err = ch.SaveChannel(
+		resmgmt.SaveChannelRequest{
+			ChannelID: channelName,
+			ChannelConfig: r,
+	})
+
+	if err != nil {
+		fmt.Printf("The error while creating channel : %v \n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("  - New ledger context created \n")
+	fmt.Printf("	- Create channel successful \n")
 
-	info, err := ld.QueryInfo()
+	err = ch.JoinChannel(channelName)
+	
+
 	if err != nil {
-		fmt.Printf("Unable to get info: %v \n", err)
+		fmt.Printf("The error while joining channel : %v \n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("The info is %+v\n", info)
+	fmt.Printf("	- Join channel successful \n")
 
-	block, err := ld.QueryBlock(5)
-	ld.QueryInfo()
-	if err != nil {
-		fmt.Printf("failed to query block: %s\n", err)
-	}
-	fmt.Printf("     - New block\n")
 
-	blockData := block.Data
-	if blockData != nil {
-		data := blockData.String()
-		// fmt.Printf("Retrieved block data #1 %+v \n", data)
 
-		// re := regexp.MustCompile(`te.*?set`)
-		re := regexp.MustCompile(`{.*?}}`)
-		fmt.Printf("pattern %v\n", re.String())
-		fmt.Println("match :",re.MatchString(data))
-
-		fetchstring := re.FindAllString(data, -1)
-		// fmt.Printf("fetch string %s\n", fetchstring)
-
-		
-		s := string(fetchstring[0])
-
-		str := strings.ReplaceAll(s, "\\", "")
-
-		fmt.Printf("json: %s\n",str)
-
-		sec := map[string]interface{}{}
-		if err := json.Unmarshal([]byte(str), &sec); err != nil {
-			println("err:",err.Error())
-		}
-		fmt.Println(sec)
-
-	}
 }
 
-func Base_Using_Created_Signing_Identity(base, certPath, keyPath *string) {
-
-	new, err := fabsdk.New(config.FromFile(*base))
-
-	if err != nil {
-		fmt.Printf("The error while creating fab context : %v \n", err)
-		os.Exit(1)
-	}
-
-	defer new.Close()
-
-	fmt.Println("New Fabric context created")
-
-	clctx := new.Context(fabsdk.WithOrg("ngpMSP"))
-
-	newMSP, err := msp.New(clctx)
-	if err != nil {
-		fmt.Printf("The error while creating ledger context : %v \n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("   - New Fabric msp-client context created \n")
-
-	fmt.Println("New Fabric with signing identity")
-
-	cert, err := ioutil.ReadFile(*certPath)
-	if err != nil {
-		fmt.Printf("The error while reading cert : %v \n", err)
-		os.Exit(1)
-	}
-	key, err := ioutil.ReadFile(*keyPath)
-	if err != nil {
-		fmt.Printf("The error while reading key : %v \n", err)
-		os.Exit(1)
-	}
-
-	identity, err := newMSP.CreateSigningIdentity(mspprov.WithCert(cert), mspprov.WithPrivateKey(key))
-
-	if err != nil {
-		fmt.Printf("The error while creating identity : %v \n", err)
-		os.Exit(1)
-	}
-
-	hctx := new.ChannelContext("ngpchannel", fabsdk.WithIdentity(identity))
-
-	ldnew, err := ledger.New(hctx)
-	if err != nil {
-		fmt.Printf("The error while creating ledger context : %v \n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("  - New ledger context created \n")
-
-	info, err := ldnew.QueryInfo()
-	if err != nil {
-		fmt.Printf("Unable to get info: %v \n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("The info new is == %+v\n", info)
-}
-
-func Custom_User_KVStore(base, certPath, keyPath *string) {
-	fmt.Printf("Using the following ccp %s", *base)
-
-	_, err := sw.GetSuite(256, "sha2", mspimpl.NewMemoryKeyStore([]byte("hi")))
-
-	new, err := fabsdk.New(config.FromFile(*base))
-
-	if err != nil {
-		fmt.Printf("The error while creating fab context : %v \n", err)
-		os.Exit(1)
-	}
-
-	defer new.Close()
-
-	fmt.Println("New Fabric context created")
-
-	clctx := new.Context(fabsdk.WithOrg("ngpMSP"))
-
-	newMSP, err := msp.New(clctx)
-	if err != nil {
-		fmt.Printf("The error while creating ledger context : %v \n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("   - New Fabric msp-client context created \n")
-
-	fmt.Println("New Fabric with signing identity")
-
-	cert, err := ioutil.ReadFile(*certPath)
-	if err != nil {
-		fmt.Printf("The error while reading cert : %v \n", err)
-		os.Exit(1)
-	}
-	key, err := ioutil.ReadFile(*keyPath)
-	if err != nil {
-		fmt.Printf("The error while reading key : %v \n", err)
-		os.Exit(1)
-	}
-
-	identity, err := newMSP.CreateSigningIdentity(mspprov.WithCert(cert), mspprov.WithPrivateKey(key))
-
-	if err != nil {
-		fmt.Printf("The error while creating identity : %v \n", err)
-		os.Exit(1)
-	}
-
-	hctx := new.ChannelContext("ngpchannel", fabsdk.WithIdentity(identity))
-
-	ldnew, err := ledger.New(hctx)
-	if err != nil {
-		fmt.Printf("The error while creating ledger context : %v \n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("  - New ledger context created \n")
-
-	info, err := ldnew.QueryInfo()
-	if err != nil {
-		fmt.Printf("Unable to get info: %v \n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("The info new is == %+v\n", info)
-}
-
-func Identity_Config(base *string) {
-	configBackend, err := config.FromFile(*base)()
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	identityCfg, err := mspimpl.ConfigFromBackend(configBackend...)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Printf("The identity config %+v", identityCfg)
-}
