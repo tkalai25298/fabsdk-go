@@ -3,21 +3,43 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/resmgmt"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
 
+	"github.com/hyperledger/fabric-sdk-go/pkg/fab/resource/genesisconfig"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"gopkg.in/yaml.v2"
 )
 
+type Configtx struct {
+	Organizations	genesisconfig.Organization
+	Capabilities	Capabilities
+	Application		genesisconfig.Application
+	Orderer			genesisconfig.Orderer
+	Channel			Channel
+	Profiles		genesisconfig.Profile
+}
+
+type Capabilities struct {
+	Channel map[string]bool
+	Orderer map[string]bool
+	Application map[string]bool
+}
+
+type Channel struct {
+	Policies	[]map[string]genesisconfig.Policy
+	Capabilities Capabilities
+}
+
 func main() {
 
-	base := flag.String("ccp", "ccp/cli-ccp.yaml", "The ccp path to use.")
+	// base := flag.String("ccp", "ccp/cli-ccp.yaml", "The ccp path to use.")
 	asLocalhost := flag.Bool("localhost", false, "To set weather we want to set localhost.")
 	channelName := "ngpchannel"
-	configPath	:= "/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts/channel.tx"
+	// configPath	:= "/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts/channel.tx"
 	flag.Parse()
 
 	if *asLocalhost {
@@ -31,8 +53,26 @@ func main() {
 		}
 	}
 
-	Create_Join_Channel(base,channelName,configPath)
+	// Create_Join_Channel(base,channelName,configPath)
+	CreateArtifacts(channelName)
+}
 
+func CreateArtifacts(channelID string) {
+
+	content, err := ioutil.ReadFile("configtx.yaml")
+	if err != nil {
+		fmt.Printf("reading configtx file err: %v",err)
+		os.Exit(1)
+	}
+	
+	configtx := Configtx{}
+	err = yaml.Unmarshal([]byte(content),configtx)
+	if err != nil {
+		fmt.Printf("Unmarshalling configtx.yaml failed: %v",err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("successfully Unmarshalled configtx \n",configtx.Profiles.Orderer.Addresses)
 }
 
 func Create_Join_Channel(base *string,channelName string,configPath string) {
@@ -87,8 +127,5 @@ func Create_Join_Channel(base *string,channelName string,configPath string) {
 	}
 
 	fmt.Printf("	- Join channel successful \n")
-
-
-
 }
 
