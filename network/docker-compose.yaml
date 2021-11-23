@@ -74,12 +74,12 @@ services:
       - CORE_PEER_LOCALMSPID=ngpMSP
       - CORE_PEER_TLS_ENABLED=false
       - CORE_CHAINCODE_ID_NAME="cpu:1.0"
-      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: /bin/bash
     volumes:
       - /var/run/:/host/var/run/
-      - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+      - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config/
       - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
       # # - ./../chaincode:/opt/gopath/src/github.com/hyperledger/fabric/peer/chaincode
       # - ./install.sh:/opt/gopath/src/github.com/hyperledger/fabric/peer/install.sh

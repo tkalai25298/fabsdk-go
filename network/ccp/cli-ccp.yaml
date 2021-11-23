@@ -44,9 +44,9 @@ organizations:
     users:
       admin:
         Key:
-          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/keystore/priv_sk"
+          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/keystore/priv_sk"
         Cert:
-          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/signcerts/Admin@ngp.cpu-network.com-cert.pem"
+          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/signcerts/Admin@ngp.cpu-network.com-cert.pem"
     # users:
     #   - admin
 
@@ -57,9 +57,9 @@ organizations:
     users:
       admin:
         Key:
-          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/keystore/priv_sk"
+          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/keystore/priv_sk"
         Cert:
-          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/signcerts/Admin@ngp.cpu-network.com-cert.pem"
+          Path: "/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config/peerOrganizations/ngp.cpu-network.com/users/Admin@ngp.cpu-network.com/msp/signcerts/Admin@ngp.cpu-network.com-cert.pem"
 
 orderers:
   orderer.cpu-network.com:
@@ -70,7 +70,7 @@ orderers:
       allow-insecure: true
     tlsCACerts:
       # Certificate location path
-      path: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/cpu-network.com/orderers/orderer.cpu-network.com/tls/ca.crt
+      path: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto-config/ordererOrganizations/cpu-network.com/orderers/orderer.cpu-network.com/tls/ca.crt
 
 peers:
   peer0.ngp.cpu-network.com:
