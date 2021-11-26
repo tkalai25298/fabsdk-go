@@ -1,13 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/resmgmt"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
+	"github.com/mitchellh/mapstructure"
+	"github.com/spf13/viper"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/fab/resource"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fab/resource/genesisconfig"
@@ -38,7 +42,6 @@ func channelDefaults() (map[string]*genesisconfig.Policy, map[string]bool) {
 	}
 	return policies, channelCapabilities()
 }
-
 
 func applicationDefaults() *genesisconfig.Application {
 
@@ -109,7 +112,6 @@ func ngpOrg() *genesisconfig.Organization {
 	}
 }
 
-
 func sampleSingleMSPChannel() *genesisconfig.Profile {
 
 	policies, _ := channelDefaults()
@@ -125,13 +127,13 @@ func sampleSingleMSPChannel() *genesisconfig.Profile {
 	}
 }
 
-
 func main() {
 
-	base := flag.String("ccp", "ccp/cli-ccp.yaml", "The ccp path to use.")
+	// base := flag.String("ccp", "ccp/cli-ccp.yaml", "The ccp path to use.")
 	asLocalhost := flag.Bool("localhost", false, "To set weather we want to set localhost.")
 	channelName := "ngpchannel"
-	configPath	:= "/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts/channel.tx"
+	// configPath	:= "/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts/channel.tx"
+	configtxPath := "/opt/gopath/src/github.com/hyperledger/fabric/peer/configtx.yaml"
 	flag.Parse()
 
 	if *asLocalhost {
@@ -144,13 +146,16 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	
+	// CreateArtifacts(channelName)
+	Create_Artifacts(configtxPath,channelName)
+	// Create_Join_Channel(base,channelName,configPath)
 
-	Create_Join_Channel(base,channelName,configPath)
-	CreateArtifacts(channelName)
 }
 
 func CreateArtifacts(channelID string) {
 	config := sampleSingleMSPChannel()
+	fmt.Printf("config: %#v",config)
 
 	configtx, err := resource.CreateChannelCreateTx(config, nil, channelID)
 
@@ -170,6 +175,63 @@ func CreateArtifacts(channelID string) {
 		fmt.Printf("The error while writing channel tx file: %v \n", err)
 		os.Exit(1)
 	}
+}
+
+func Create_Artifacts(configtxfile string,channelID string) {
+	configtx,err := ioutil.ReadFile(configtxfile)
+
+	if err != nil {
+		fmt.Printf("The error while reading configtx file : %v \n", err)
+		os.Exit(1)
+	}
+
+	viper.SetConfigType("yaml")
+	err = viper.ReadConfig(bytes.NewBuffer(configtx))
+	if err != nil {
+		fmt.Printf("The error while reading config from configtx file : %v \n", err)
+		os.Exit(1)
+	}
+	// fmt.Printf("profile config: %v",viper.Get("Profiles.ngpchannel"))
+
+	profile := &genesisconfig.Profile{}
+
+	err = mapstructure.Decode(viper.Get("Profiles.ngpchannel"),profile)
+
+	if err != nil {
+		fmt.Printf("The error while decoding map structure : %v \n", err)
+		os.Exit(1)
+	}
+
+	policy := make(map[string]*genesisconfig.Policy)
+
+	err = mapstructure.Decode(viper.Get("Profiles.ngpchannel.Application.Policies"),&policy)
+
+	if err != nil {
+		fmt.Printf("The error while decoding map structure : %v \n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("policy: %#v",policy)
+
+	config, err := resource.CreateChannelCreateTx(profile, nil, channelID)
+
+	if err != nil {
+		fmt.Printf("The error while creating channel tx : %v \n", err)
+		os.Exit(1)
+	}
+
+	f,err := os.Create("channel-artifacts/channel.tx")
+	if err != nil {
+		fmt.Printf("The error while creating channel tx file: %v \n", err)
+		os.Exit(1)
+	}
+
+	_,err = f.Write(config)
+	if err != nil {
+		fmt.Printf("The error while writing channel tx file: %v \n", err)
+		os.Exit(1)
+	}
+
 }
 
 func Create_Join_Channel(base *string,channelName string,configPath string) {
