@@ -1,11 +1,11 @@
 #Creating channel
 echo "######### Creating channel #########"
-peer channel create -o orderer.cpu-network.com:7050 -c ngpchannel -f ./channel-artifacts/channel.tx 
-CORE_PEER_ADDRESS=peer0.ngp.cpu-network.com:7051
+# peer channel create -o orderer.cpu-network.com:7050 -c ngpchannel -f ./channel-artifacts/channel.tx 
+# CORE_PEER_ADDRESS=peer0.ngp.cpu-network.com:7051
 #joining peer
 echo "######### Joining peer to ngpchannel #########"
-peer channel join -b ngpchannel.block
-peer channel update -o orderer.cpu-network.com:7050 -c ngpchannel -f ./channel-artifacts/ngpMSPanchors.tx
+# peer channel join -b ngpchannel.block
+# peer channel update -o orderer.cpu-network.com:7050 -c ngpchannel -f ./channel-artifacts/ngpMSPanchors.tx
 #chaincode installation
 # echo "######### cloning the chainode from git #########"
 #  git clone git@github.com:powerofn/enegry-consumption-chaincode.git

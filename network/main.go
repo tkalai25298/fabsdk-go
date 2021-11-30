@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/resmgmt"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
@@ -129,10 +130,10 @@ func sampleSingleMSPChannel() *genesisconfig.Profile {
 
 func main() {
 
-	// base := flag.String("ccp", "ccp/cli-ccp.yaml", "The ccp path to use.")
+	base := flag.String("ccp", "ccp/cli-ccp.yaml", "The ccp path to use.")
 	asLocalhost := flag.Bool("localhost", false, "To set weather we want to set localhost.")
 	channelName := "ngpchannel"
-	// configPath	:= "/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts/channel.tx"
+	configPath	:= "/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts/channel.tx"
 	configtxPath := "/opt/gopath/src/github.com/hyperledger/fabric/peer/configtx.yaml"
 	flag.Parse()
 
@@ -148,7 +149,7 @@ func main() {
 	}
 	
 	// CreateArtifacts(channelName)
-	Create_Artifacts(configtxPath,channelName)
+	// Create_Artifacts(configtxPath,channelName)
 	// Create_Join_Channel(base,channelName,configPath)
 
 }
@@ -202,16 +203,48 @@ func Create_Artifacts(configtxfile string,channelID string) {
 		os.Exit(1)
 	}
 
-	policy := make(map[string]*genesisconfig.Policy)
-
-	err = mapstructure.Decode(viper.Get("Profiles.ngpchannel.Application.Policies"),&policy)
-
-	if err != nil {
-		fmt.Printf("The error while decoding map structure : %v \n", err)
-		os.Exit(1)
+	//converting policies of Channel Default Policies
+	for k,v := range profile.Policies {
+		profile.Policies[strings.Title(k)] = v
 	}
 
-	fmt.Printf("policy: %#v",policy)
+	delete(profile.Policies,"admins")
+	delete(profile.Policies,"readers")
+	delete(profile.Policies,"writers")
+
+
+	for k,v := range profile.Application.Policies {
+		profile.Application.Policies[strings.Title(k)] = v
+		// fmt.Println(k,v)
+	}
+
+	delete(profile.Application.Policies,"admins")
+	delete(profile.Application.Policies,"readers")
+	delete(profile.Application.Policies,"writers")
+	delete(profile.Application.Policies,"lifecycleendorsement")
+	delete(profile.Application.Policies,"endorsement")
+
+	for k,v := range profile.Application.Organizations[0].Policies {
+		profile.Application.Organizations[0].Policies[strings.Title(k)] = v
+		// fmt.Println(k,v)
+	}
+
+	delete(profile.Application.Organizations[0].Policies,"admins")
+	delete(profile.Application.Organizations[0].Policies,"readers")
+	delete(profile.Application.Organizations[0].Policies,"writers")
+	delete(profile.Application.Organizations[0].Policies,"endorsement")
+
+	for k,v := range profile.Application.Capabilities {
+		profile.Application.Capabilities[strings.Title(k)] = v
+	}
+
+	delete(profile.Application.Capabilities,"v2_0")
+
+	profile.Application.Organizations[0].MSPType = "bccsp"
+
+	fmt.Printf("\n\n policy: %#v",profile)
+
+	// policy := make(map[string]*genesisconfig.Policy)
 
 	config, err := resource.CreateChannelCreateTx(profile, nil, channelID)
 
